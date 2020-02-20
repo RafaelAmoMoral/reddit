@@ -1,0 +1,53 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-back-button></ion-back-button>
+        </ion-buttons>
+        <ion-title>Añade un nuevo post</ion-title>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+    <form [formGroup]="form">
+        <ion-item>
+            <ion-label position="floating">Título</ion-label>
+            <ion-input formControlName="title" type="text"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label position="floating">Contenido</ion-label>
+            <ion-textarea formControlName="content">
+            </ion-textarea>
+        </ion-item>
+    </form>
+    <ion-item lines="none">
+        <ion-label>Multimedia (Disponible solo una)</ion-label>
+    </ion-item>
+    <ion-item lines="none">
+        <img [src]="image" *ngIf="image" />
+        <video [src]="video" controls style="width: 200px; height: 200px;" preload="auto" *ngIf="video"></video> </ion-item>
+    <ion-slides>
+        <ion-slide>
+            <ion-thumbnail (click)="getVideo()">
+                <img src="image" />GET VIDEO
+            </ion-thumbnail>
+        </ion-slide>
+        <ion-slide>
+            <ion-button (click)="getVideoFromGallery()" color="primary">
+                VIDEO FROM GALLLERY
+            </ion-button>
+        </ion-slide>
+        <ion-slide>
+            <ion-button (click)="getImageFromGallery()" color="primary">
+                IMAGE FROM GALLERY
+            </ion-button>
+        </ion-slide>
+        <ion-slide>
+            <ion-button (click)="getImage()" color="primary">
+                IMAGE FROM CAMERA
+            </ion-button>
+        </ion-slide>
+    </ion-slides>
+    <ion-button (click)="addPost()" expand="full" color="primary">
+        Subir post
+    </ion-button>
+</ion-content>

@@ -1,0 +1,71 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-back-button></ion-back-button>
+        </ion-buttons>
+        <ion-title>Sign in</ion-title>
+    </ion-toolbar>
+</ion-header>
+<ion-content class="ion-padding">
+    <ion-grid>
+        <ion-row>
+            <ion-col size="12">
+                <ion-text>
+                    <h1 class="title" style="text-align: center">Reddit</h1>
+                </ion-text>
+                <ion-thumbnail>
+                    <img src="../../../../assets/2639900-512.png">
+                </ion-thumbnail>
+            </ion-col>
+        </ion-row>
+    </ion-grid>
+
+
+    <form [formGroup]="form" class="top-bottom-little-margin">
+        <ion-item>
+            <ion-label position="floating">E-Mail
+            </ion-label>
+            <ion-input required formControlName="email" type="email"></ion-input>
+        </ion-item>
+        <ion-item>
+            <ion-label position="floating">Password
+            </ion-label>
+            <ion-input required #passwordEyeRegister [type]="passwordTypeInput" formControlName="password"></ion-input>
+            <button item-end class="btn_eye_icon" (click)="togglePasswordMode()">
+                <ion-icon [name]="iconpassword"></ion-icon>
+            </button>
+        </ion-item>
+        <ion-button class="top-bottom-little-margin" block color="primary" expand='block' [disabled]="form.invalid" (click)="login()">
+            Login
+        </ion-button>
+    </form>
+
+    <ion-row>
+        <ion-col size="12">
+            <ion-text>
+                <p class="secundary-color">O inicia con</p>
+            </ion-text>
+        </ion-col>
+    </ion-row>
+    <ion-grid>
+        <ion-row>
+            <ion-col size="6">
+                <ion-button (click)="loginGoogle()" color="primary">
+                    <ion-icon slot="start" name="logo-google"></ion-icon>
+                </ion-button>
+            </ion-col>
+            <ion-col size="6">
+                <ion-button (click)="loginFacebook()" color="primary">
+                    <ion-icon slot="start" name="logo-facebook"></ion-icon>
+                </ion-button>
+            </ion-col>
+        </ion-row>
+    </ion-grid>
+    <ion-row class="top-bottom-little-margin">
+        <ion-text>
+            <p class="secundary-color" style="text-align: center">¿No dispones de cuenta? <b class="primary-color" routerLink="/signup" routerDirection="forward">Regístrate</b></p>
+        </ion-text>
+    </ion-row>
+
+
+</ion-content>

@@ -1,0 +1,31 @@
+.spin {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+ion-spinner {
+    width: 28px;
+    height: 28px;
+    stroke: #444;
+    fill: #222;
+}
+
+.no-padding {
+    padding-right: 2px;
+}
+
+.small {
+    height: 20px;
+    width: 20px;
+}
+
+.title-with-icon {
+    display: inline-flex;
+    width: min-content;
+}
+
+.col-fit-height {
+    height: fit-content;
+}

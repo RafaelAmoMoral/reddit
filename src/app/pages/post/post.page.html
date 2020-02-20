@@ -1,0 +1,46 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-back-button></ion-back-button>
+        </ion-buttons>
+        <ion-title>Post</ion-title>
+    </ion-toolbar>
+</ion-header>
+<ion-content class="ion-padding">
+    <ion-item lines="none">
+        <ion-text>
+            <h3>{{post.title}}</h3>
+        </ion-text>
+    </ion-item>
+    <ion-item lines="none">
+        <img [src]="post.image" *ngIf="post.image" />
+        <ion-text>
+            <p>{{post.content}}</p>
+        </ion-text>
+    </ion-item>
+    <ion-item lines="none" *ngIf="post.video">
+        <video [src]="post.video" width="320" height="240" controls></video>
+    </ion-item>
+    <ion-item>
+        <ion-label>{{post.userName}}</ion-label>
+        <ion-label>{{post.date | date:'mediumDate'}}</ion-label>
+        <ion-button slot="end" [color]="userAlreadyLikesPost()?'danger':'primary'" (click)="onPostLiked(post.id)">
+            <ion-icon slot="icon-only" name="thumbs-up" color="light"></ion-icon>
+            {{post.nLikes}}
+        </ion-button>
+    </ion-item>
+    <ion-content>
+        <ion-list class="ion-margin" *ngFor="let coment of coments;let i = index">
+            <ion-item lines="none">
+                <ion-text>
+                    <p>{{coment.userName}}</p>
+                </ion-text>
+            </ion-item>
+            <ion-item>
+                <ion-text>
+                    <p>{{coment.content}}</p>
+                </ion-text>
+            </ion-item>
+        </ion-list>
+    </ion-content>
+</ion-content>

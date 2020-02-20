@@ -1,0 +1,66 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-title class="primary-color">Reddit</ion-title>
+        <ion-buttons slot="end">
+            <ion-button style="width: 100%;" (click)="presentFilterOptions($event)" fill="clear">{{filterType}}
+                <ion-icon slot="icon-only" name="arrow-dropdown"></ion-icon>
+            </ion-button>
+            <ion-button (click)="presentUserOptions($event)">
+                <ion-icon slot="icon-only" [name]="this.authenticationService.getAuthenticatedUser()?'person':'more'"></ion-icon>
+            </ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="getPosts($event)">
+        <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Pull to refresh" refreshingSpinner="circles" refreshingText="Refreshing...">
+        </ion-refresher-content>
+    </ion-refresher>
+
+    <ion-infinite-scroll threshold="100px" (ionInfinite)="getPosts($event)">
+        <ion-infinite-scroll-content loadingSpinner="bubbles">
+            <ion-list>
+                <ion-item *ngFor="let post of posts;let i = index">
+                    <ion-grid fixed>
+                        <ion-row>
+                            <ion-col size="2" style="margin: auto" (click)="redirectToPost(post)">
+                                <ion-thumbnail *ngIf="post.image">
+                                    <img [src]="post.image" />
+                                </ion-thumbnail>
+                            </ion-col>
+                            <ion-col [size]="post.image?10:12">
+                                <ion-grid fixed>
+                                    <ion-row (click)="redirectToPost(post)">
+                                        <ion-col size="12">
+                                            <ion-text color="primary">
+                                                <h5>{{post.title}}</h5>
+                                            </ion-text>
+                                            <ion-text>
+                                                <p>{{post.content}}</p>
+                                            </ion-text>
+                                        </ion-col>
+                                    </ion-row>
+                                    <ion-row>
+                                        <ion-col class="col-fit-height" size="4">
+                                            <ion-text color="secundary" class="small-font-size">{{post.userName}}</ion-text>
+                                        </ion-col>
+                                        <ion-col class="col-fit-height" size="4">
+                                            <ion-text class="small-font-size">{{post.date | date:'mediumDate'}}</ion-text>
+                                        </ion-col>
+                                        <ion-col class="col-fit-height" size="4">
+                                            <ion-button fill="clear" (click)="onPostLiked(post.id, i)">
+                                                <ion-icon slot="icon-only" name="thumbs-up" [color]="userAlreadyLikesPost(i)?'danger':'primary'"></ion-icon>
+                                                <ion-label [color]="userAlreadyLikesPost(i)?'danger':'primary'">{{post.nLikes}}</ion-label>
+                                            </ion-button>
+                                        </ion-col>
+                                    </ion-row>
+                                </ion-grid>
+                            </ion-col>
+                        </ion-row>
+                    </ion-grid>
+                </ion-item>
+            </ion-list>
+        </ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+</ion-content>

@@ -1,0 +1,37 @@
+.flex {
+    display: flex;
+    justify-content: center;
+}
+
+.bottom {
+    margin-top: 50%;
+}
+
+ion-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    ion-button {
+        width: 100%;
+    }
+}
+
+ion-col {
+    display: flex;
+    justify-content: center;
+}
+
+.btn_eye_icon {
+    position: absolute;
+    right: 0;
+    bottom: 4px;
+    background: transparent;
+    ion-icon {
+        font-size: 22px;
+        color: #757575;
+    }
+}
+
+.btn_eye_icon:focus {
+    outline: none !important;
+}
