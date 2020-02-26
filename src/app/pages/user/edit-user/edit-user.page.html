@@ -1,0 +1,83 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <ion-back-button></ion-back-button>
+        </ion-buttons>
+        <ion-title>Modifica tu perfil</ion-title>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content>
+    <div class="ion-padding">
+        <ion-row>
+            <ion-col size="12">
+                <ion-item lines='none'>
+                    <ion-label color='primary'>Usuario</ion-label>
+                </ion-item>
+            </ion-col>
+        </ion-row>
+        <form [formGroup]=userForm>
+            <ion-row>
+                <ion-col size="12">
+                    <ion-item>
+                        <ion-label position="floating">Descripción</ion-label>
+                        <ion-textarea formControlName="description"></ion-textarea>
+                    </ion-item>
+                </ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col size="12">
+                    <ion-item>
+                        <ion-label position="floating">Teléfono</ion-label>
+                        <ion-input type="number" formControlName="phone"></ion-input>
+                    </ion-item>
+                </ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col size="12">
+                    <ion-button (click)="saveUserChanges()" expand="block" shape="round" [disabled]="userForm.invalid">
+                        Guardar
+                    </ion-button>
+                </ion-col>
+            </ion-row>
+        </form>
+    </div>
+    <div class="ion-padding">
+        <ion-row>
+            <ion-col size="12">
+                <form [formGroup]="securityForm">
+                    <ion-row>
+                        <ion-col size="12">
+                            <ion-item lines='none'>
+                                <ion-label color='primary'>Seguridad</ion-label>
+                            </ion-item>
+                        </ion-col>
+                    </ion-row>
+                    <ion-row>
+                        <ion-col size="12">
+                            <ion-item>
+                                <ion-label position="floating">Email</ion-label>
+                                <ion-input type="Email" formControlName="email"></ion-input>
+                            </ion-item>
+                        </ion-col>
+                    </ion-row>
+                    <ion-row>
+                        <ion-col size="12">
+                            <ion-item>
+                                <ion-label position="floating">Contraseña</ion-label>
+                                <ion-input type="password" formControlName="password"></ion-input>
+                            </ion-item>
+                        </ion-col>
+                    </ion-row>
+                    <ion-row>
+                        <ion-col size="12">
+                            <ion-button (click)="saveUserChanges()" expand="block" shape="round">
+                                Guardar
+                            </ion-button>
+                        </ion-col>
+                    </ion-row>
+                </form>
+            </ion-col>
+        </ion-row>
+    </div>
+</ion-content>

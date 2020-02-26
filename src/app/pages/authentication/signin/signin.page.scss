@@ -35,3 +35,11 @@ ion-col {
 .btn_eye_icon:focus {
     outline: none !important;
 }
+
+ion-thumbnail {
+    width: 100%;
+    img {
+        height: 5vh;
+        object-fit: contain;
+    }
+}

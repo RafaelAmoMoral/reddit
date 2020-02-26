@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { User } from 'src/app/model/iUser';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/app/services/authentication.service';
 import { NavController, IonInput } from '@ionic/angular';
 import { LoadingManagerModule } from 'src/app/modules/loading-manager/loading-manager.module';
 import { ToastManagerModule } from 'src/app/modules/toast-manager/toast-manager.module';
@@ -12,18 +12,15 @@ import { ToastManagerModule } from 'src/app/modules/toast-manager/toast-manager.
 })
 export class SignupPage implements OnInit {
   @ViewChild('passwordEyeRegister', { static: false }) passwordEye: IonInput;
-  passwordTypeInput = 'password';
-  iconpassword = 'eye-off';
-
+  public passwordTypeInput: string;
+  public iconpassword: string;
   public form: FormGroup
-  private user: User;
 
   constructor(private formBuilder: FormBuilder, private authentication: AuthenticationService,
     private nav: NavController, private loader: LoadingManagerModule,
     private toast: ToastManagerModule) {
-    this.user = {
-      email: ''
-    }
+    this.passwordTypeInput = 'password';
+    this.iconpassword = 'eye-off';
   }
 
   ngOnInit() {
@@ -36,22 +33,38 @@ export class SignupPage implements OnInit {
 
   async signUp() {
     await this.loader.presentLoading();
-    this.user = {
-      name: this.form.get('name').value,
+    let user = this.getUserValues();
+    if (user) {
+      this.authentication.signUp(user)
+        .then(() => {
+          this.loader.hide();
+          this.nav.navigateForward('/home');
+        })
+        .catch((err) => {
+          this.loader.hide();
+          this.toast.show(err);
+        })
+    }
+  }
+
+  /**
+  * Método para obtener los datos del formulario.
+  * @returns varianle de tipo Usuario.
+  */
+  getUserValues(): User {
+    let user = {
+      name:  this.form.get('name').value,
       email: this.form.get('email').value,
       password: this.form.get('password').value
     }
-    this.authentication.signUp(this.user)
-      .then((data) => {
-        this.loader.hide();
-        this.nav.navigateForward('/home');
-      })
-      .catch((err) => {
-        this.loader.hide();
-        this.toast.show(err);
-      })
+    return user;
   }
 
+  /**
+   * Método usado en el botón #passwordEye de HTML.
+   * Este método es usado para mostrar el yipo de campo de 
+   * la contraseña de text a password al igual que el boton que contiene.
+   */
   togglePasswordMode() {
     this.passwordTypeInput = this.passwordTypeInput === 'text' ? 'password' : 'text';
     this.iconpassword = this.iconpassword === 'eye-off' ? 'eye' : 'eye-off';

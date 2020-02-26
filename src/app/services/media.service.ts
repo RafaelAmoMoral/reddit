@@ -23,18 +23,33 @@ export class MediaService {
    * @param option PictureSourceType(Camera|PhotoLibrary)
    */
   async getDeviceImage(option: PictureSourceType): Promise<any> {
-    let image = await this.camera.getPicture({
-      quality: 10,
-      sourceType: option,
-      destinationType: this.camera.DestinationType.DATA_URL,
-      mediaType: this.camera.MediaType.PICTURE,
-    });
-
-    return image;
+    if (option === PictureSourceType.CAMERA || option === PictureSourceType.PHOTOLIBRARY) {
+      try {
+        let image = await this.camera.getPicture({
+          quality: 10,
+          sourceType: option,
+          destinationType: this.camera.DestinationType.DATA_URL,
+          mediaType: this.camera.MediaType.PICTURE,
+        });
+        return image;
+      } catch (err) {
+        throw err;
+      }
+    } else {
+      return;
+    }
   }
 
-  generateImage(img: string, MAX_WIDTH: number,
-    MAX_HEIGHT: number, quality: number = 90) {
+  /**
+   * Genera una nueva imágen con un tamaño y calidad en concreto a partir de
+   * un base64 anterior.
+   * @param img Imágen en base64
+   * @param MAX_WIDTH Ancho de la imágen
+   * @param MAX_HEIGHT Alto de la imágen
+   * @param quality calidad de la imágen
+   */
+  resizeImage(img: string, MAX_WIDTH: number,
+    MAX_HEIGHT: number, quality: number = 90): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       const canvas: HTMLCanvasElement = document.createElement('canvas');
       const image: HTMLImageElement = new Image();
@@ -69,12 +84,11 @@ export class MediaService {
         resolve(dataUrl);
       };
       image.onerror = e => {
-        console.log(6)
-        console.log(e);
         reject(e);
       };
     });
   }
+
 
   getImageFromBase64(base64: string) {
     return 'data:image/jpeg;base64,' + base64;
@@ -87,46 +101,50 @@ export class MediaService {
       mediaType: this.camera.MediaType.VIDEO,
     }
     let x = await this.camera.getPicture(options);
-
-    let filename = x.replace(/^.*[\\\/]/, '');
-    console.log('/storage/emulated/0/DCIM/Camera/' + filename);
-    this.file.resolveDirectoryUrl('/storage/emulated/0/DCIM/Camera').then(imageBase64 => {
-      console.log(imageBase64)
-      return imageBase64;
-    })
+    this.file.resolveDirectoryUrl('/storage/emulated/0/DCIM/Camera')
+      .then(imageBase64 => {
+        return imageBase64;
+      })
       .catch(err => { console.log(err) })
-
-
   }
 
+  /**
+   * Captura un vídeo, crea un thumbnail de dicho vídeo y posteriormente
+   * devuelve el vídeo en base64.
+   */
   getVideo(): Promise<any> {
     let options: CaptureVideoOptions = {
       duration: 1,
-      quality: 10,
+      quality: 10, //Lo ignora
     }
 
-    return this.media.captureVideo(options)
-      .then((data: MediaFile[]) => {
-        var option: CreateThumbnailOptions = {
-          fileUri: 'file:///storage/emulated/0/DCIM/Camera/' + data[0].name, width: 160, height: 206, atTime: 1, outputFileName: 'thumbnail_' + data[0].name, quality: 50
-        };
-        return this.videoEditor.createThumbnail(option)
-          .then(result => {
-            console.log(result)
-            ///storage/emulated/0/Android/data/io.ionic.starter/files/files/videos/
-            return this.convertVideoToBase64(data[0].fullPath);
-          })
-          .catch(e => {
-            console.log(e)
-            // alert('fail video editor');
-          });
-      })
-      .catch(err => {
-        console.log(err)
-      })
+    return new Promise((resolve, reject) => {
+      this.media.captureVideo(options)
+        .then((data: MediaFile[]) => {
+          var option: CreateThumbnailOptions = {
+            fileUri: 'file:///storage/emulated/0/DCIM/Camera/' + data[0].name,
+            width: 160,
+            height: 206,
+            atTime: 1,
+            outputFileName: 'thumbnail_' + data[0].name, quality: 50,
+          };
+          this.videoEditor.createThumbnail(option)
+            .then(async (result) => {
+              /// CREA EL THUMBNAIL PERO NOSE OBTENER LA IMÁGEN
+              //result --> storage/emulated/0/Android/data/io.ionic.starter/files/files/videos/
+              resolve(await this.convertVideoToBase64(data[0].fullPath));
+            })
+            .catch(err => reject(err));
+        })
+        .catch(err => reject(err))
+    })
   }
 
-  async convertVideoToBase64(video) {
+  /**
+   * Obtiene el base64 de un vídeo en específico.
+   * @param video path del vídeo.
+   */
+  convertVideoToBase64(video) {
     return new Promise(async (resolve) => {
       let res: any = await this.file.resolveLocalFilesystemUrl(video);
       res.file((resFile) => {

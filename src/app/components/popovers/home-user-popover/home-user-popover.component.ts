@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NavController, PopoverController } from '@ionic/angular';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/app/services/authentication.service';
 import { LoadingManagerModule } from 'src/app/modules/loading-manager/loading-manager.module';
 import { ToastManagerModule } from 'src/app/modules/toast-manager/toast-manager.module';
 
@@ -17,8 +17,7 @@ export class HomeUserPopoverComponent implements OnInit {
   ngOnInit() { }
 
   redirectToUserProfile() {
-    this.popover.dismiss();
-    this.nav.navigateForward('user');
+    this.popover.dismiss(false);
   }
 
   async logOut() {

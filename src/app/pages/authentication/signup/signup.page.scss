@@ -17,3 +17,11 @@ ion-col {
     display: flex;
     justify-content: center;
 }
+
+ion-thumbnail {
+    width: 100%;
+    img {
+        height: 5vh;
+        object-fit: contain;
+    }
+}

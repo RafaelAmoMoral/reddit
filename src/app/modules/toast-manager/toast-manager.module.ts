@@ -15,10 +15,10 @@ export class ToastManagerModule {
   async show(msg) {
     const toast = await this.toastController.create({
       message: msg,
-      showCloseButton: true,
       position: 'top',
+      duration: 5000,
       closeButtonText: 'Ok',
-      duration: 5000
+      showCloseButton: true
     });
     toast.present();
   }

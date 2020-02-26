@@ -3,10 +3,10 @@
         <ion-buttons slot="start">
             <ion-back-button></ion-back-button>
         </ion-buttons>
-        <ion-title>Tu cuenta</ion-title>
+        <ion-title>u/{{user.name}}</ion-title>
         <ion-buttons slot="end">
-            <ion-button>
-                <ion-icon slot="icon-only" name="create"></ion-icon>
+            <ion-button routerLink="/user/edit-user" routerDirection="forward">
+                <ion-icon slot="icon-only" name="settings"></ion-icon>
             </ion-button>
         </ion-buttons>
     </ion-toolbar>
@@ -15,64 +15,130 @@
     <!--Contenido del perfil del usuario-->
     <ion-item lines="none">
         <ion-thumbnail slot="start" (click)="openCamera()">
-            <img [src]="this.user.image?this.user.image:this.userImage">
-            <!--Si actualmente no guardo en el iStorage no es nula y la intenta cojer, aunque en firebase no este esa url-->
+            <img [src]="user.image?user.image:userImage">
         </ion-thumbnail>
-        <ion-label>{{this.user.name}}</ion-label>
+        <ion-label>u/{{this.user.name}}</ion-label>
     </ion-item>
     <ion-item lines="none">
-        <ion-textarea readonly [value]="this.user.description? 'this.user.description' : 'Modifique su perfil ahora para mostrar a los demás usuarios algo de usted'">
+        <ion-textarea readonly [value]="this.user.description?this.user.description: 'Modifique su perfil ahora para mostrar a los demás usuarios algo de usted'">
         </ion-textarea>
+    </ion-item>
+    <ion-item lines="none" *ngIf="this.user.phone">
+        <ion-text readonly>{{this.user.phone}}
+        </ion-text>
     </ion-item>
     <!--Fin del contenido del usuario-->
     <ion-item-divider>
     </ion-item-divider>
-    <!--Contenido de los posts del ususario-->
-    <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
-        <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Pull to refresh" refreshingSpinner="circles" refreshingText="Refreshing...">
-        </ion-refresher-content>
-    </ion-refresher>
-    <ion-list>
-        <ion-item *ngFor="let post of userPosts;let i = index">
-            <ion-grid fixed>
-                <ion-row>
-                    <ion-col size="2" style="margin: auto">
-                        <ion-thumbnail *ngIf="post.image" (click)="redirectToPost(post)">
-                            <img [src]="post.image" />
-                        </ion-thumbnail>
-                    </ion-col>
-                    <ion-col [size]="post.image?10:12">
+    <!--Contenido de los posts del usuario-->
+    <ion-segment [(ngModel)]="tabSelected">
+        <ion-segment-button value="0" (click)="slides.slideTo(0)">
+            <ion-label>Posts del usuario</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="1" (click)="slides.slideTo(1)">
+            <ion-label>Posts gustados</ion-label>
+        </ion-segment-button>
+    </ion-segment>
+    <ion-slides #slides>
+        <ion-slide>
+            <ion-content>
+                <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+                    <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Pull to refresh" refreshingSpinner="circles" refreshingText="Refreshing...">
+                    </ion-refresher-content>
+                </ion-refresher>
+                <ion-list>
+                    <ion-item *ngFor="let post of userPosts;let i = index">
                         <ion-grid fixed>
-                            <ion-row (click)="redirectToPost(post)">
-                                <ion-col size="12">
-                                    <ion-text color="primary">
-                                        <h5>{{post.title}}</h5>
-                                    </ion-text>
-                                    <ion-text>
-                                        <p>{{post.content}}</p>
-                                    </ion-text>
-                                </ion-col>
-                            </ion-row>
                             <ion-row>
-                                <ion-col size="4">
-                                    <ion-text color="secundary" class="small-font-size">{{post.userName}}</ion-text>
+                                <ion-col size="2" style="margin: auto">
+                                    <ion-thumbnail *ngIf="post.image" (click)="redirectToPost(post)">
+                                        <img [src]="post.image" />
+                                    </ion-thumbnail>
                                 </ion-col>
-                                <ion-col size="4">
-                                    <ion-text class="small-font-size">{{post.date | date:'mediumDate'}}</ion-text>
-                                </ion-col>
-                                <ion-col size="4">
-                                    <ion-button fill="clear" (click)="onPostLiked(post.id, i)">
-                                        <ion-icon slot="icon-only" name="thumbs-up" [color]="userAlreadyLikesPost(i)?'danger':'primary'"></ion-icon>
-                                        <ion-label [color]="userAlreadyLikesPost(i)?'danger':'primary'">{{post.nLikes}}</ion-label>
-                                    </ion-button>
+                                <ion-col [size]="post.image?10:12">
+                                    <ion-grid fixed>
+                                        <ion-row (click)="redirectToPost(post)">
+                                            <ion-col size="12">
+                                                <ion-text color="primary">
+                                                    <h5>{{post.title}}</h5>
+                                                </ion-text>
+                                                <ion-text>
+                                                    <p>{{post.content}}</p>
+                                                </ion-text>
+                                            </ion-col>
+                                        </ion-row>
+                                        <ion-row>
+                                            <ion-col size="4">
+                                                <ion-text color="secundary" class="small-font-size">u/{{post.userName}}</ion-text>
+                                            </ion-col>
+                                            <ion-col size="4">
+                                                <ion-text class="small-font-size">{{post.date | date:'mediumDate'}}</ion-text>
+                                            </ion-col>
+                                            <ion-col size="4">
+                                                <ion-button fill="clear" (click)="onPostLiked(post.id, i)">
+                                                    <ion-icon slot="icon-only" name="thumbs-up" [color]="userAlreadyLikesPost(i)?'danger':'primary'"></ion-icon>
+                                                    <ion-label [color]="userAlreadyLikesPost(i)?'danger':'primary'">{{post.nLikes}}</ion-label>
+                                                </ion-button>
+                                            </ion-col>
+                                        </ion-row>
+                                    </ion-grid>
                                 </ion-col>
                             </ion-row>
                         </ion-grid>
-                    </ion-col>
-                </ion-row>
-            </ion-grid>
-        </ion-item>
-    </ion-list>
+                    </ion-item>
+                </ion-list>
+            </ion-content>
+        </ion-slide>
+        <ion-slide>
+            <ion-content>
+                <ion-refresher slot="fixed" (ionRefresh)="refreshUserLikedPosts($event)">
+                    <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Pull to refresh" refreshingSpinner="circles" refreshingText="Refreshing...">
+                    </ion-refresher-content>
+                </ion-refresher>
+                <ion-list>
+                    <ion-item *ngFor="let post of userLikedPosts;let x = index">
+                        <ion-grid fixed>
+                            <ion-row>
+                                <ion-col size="2" style="margin: auto">
+                                    <ion-thumbnail *ngIf="post.image" (click)="redirectToPost(post)">
+                                        <img [src]="post.image" />
+                                    </ion-thumbnail>
+                                </ion-col>
+                                <ion-col [size]="post.image?10:12">
+                                    <ion-grid fixed>
+                                        <ion-row (click)="redirectToPost(post)">
+                                            <ion-col size="12">
+                                                <ion-text color="primary">
+                                                    <h5>{{post.title}}</h5>
+                                                </ion-text>
+                                                <ion-text>
+                                                    <p>{{post.content}}</p>
+                                                </ion-text>
+                                            </ion-col>
+                                        </ion-row>
+                                        <ion-row>
+                                            <ion-col size="4">
+                                                <ion-text color="secundary" class="small-font-size">u/{{post.userName}}</ion-text>
+                                            </ion-col>
+                                            <ion-col size="4">
+                                                <ion-text class="small-font-size">{{post.date | date:'mediumDate'}}</ion-text>
+                                            </ion-col>
+                                            <ion-col size="4">
+                                                <ion-button fill="clear" (click)="onPostLiked(post.id, x)">
+                                                    <ion-icon slot="icon-only" name="thumbs-up" color='danger'></ion-icon>
+                                                    <ion-label color='danger'>{{post.nLikes}}</ion-label>
+                                                </ion-button>
+                                            </ion-col>
+                                        </ion-row>
+                                    </ion-grid>
+                                </ion-col>
+                            </ion-row>
+                        </ion-grid>
+                    </ion-item>
+                </ion-list>
+            </ion-content>
+        </ion-slide>
+    </ion-slides>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button routerLink="/post/add-post" routerDirection="forward">
             <ion-icon name="add"></ion-icon>

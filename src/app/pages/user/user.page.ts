@@ -1,16 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, ViewChild } from '@angular/core';
 import { User } from 'src/app/model/iUser';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/app/services/authentication.service';
 import { PostService } from 'src/app/services/post.service';
 import { Post } from 'src/app/model/iPost';
 import { LoadingManagerModule } from 'src/app/modules/loading-manager/loading-manager.module';
 import { MediaService } from 'src/app/services/media.service';
 import { SafeResourceUrl, DomSanitizer } from '@angular/platform-browser';
-import { NavController } from '@ionic/angular';
-import { NavigationExtras } from '@angular/router';
+import { NavController, IonSegment } from '@ionic/angular';
+import { NavigationExtras, ActivatedRoute } from '@angular/router';
 import { UserService } from 'src/app/services/user.service';
 import { ToastManagerModule } from 'src/app/modules/toast-manager/toast-manager.module';
 import { PictureSourceType } from '@ionic-native/camera/ngx';
+
 
 
 @Component({
@@ -23,61 +24,113 @@ export class UserPage implements OnInit {
   public user: User;
   public userImage: SafeResourceUrl = 'https://gravatar.com/avatar/dba6bae8c566f9d4041fb9cd9ada7741?d=identicon&f=y';
   public userPosts: Post[];
+  public userLikedPosts: Post[];
+  public tabSelected: number;
 
   constructor(private authentication: AuthenticationService, private postService: PostService,
     private loading: LoadingManagerModule, private media: MediaService, private nav: NavController,
-    private userService: UserService, private sanitizer: DomSanitizer, private toast: ToastManagerModule) {
+    private userService: UserService, private sanitizer: DomSanitizer, private toast: ToastManagerModule,
+    private route: ActivatedRoute) {
+    this.tabSelected = 0;
+    this.user = {
+      name: '',
+      description: '',
+      phone: 0
+    }
     this.setPage();
   }
 
   ngOnInit() {
   }
 
-
   /**
-   * Método usado al arrastrar la lista hacia abajo. Es el encargado
-   * obtener las notas para refrescar la lista.
+   * Obtiene los posts 
    * @param $event Evento producido al refrescar el usuario la lista
    * arrastrando el dedo hacia abajo.
    */
   doRefresh($event) {
-    this.userService.getPosts(this.user).then(
-      (data: Post[]) => {
+    this.userService.getPosts(this.user)
+      .then((data: Post[]) => {
         this.userPosts = data;
         $event.target.complete();
       })
-      .catch(error => {
+      .catch(err => {
         $event.target.complete();
+        this.toast.show(err);
       });
   }
 
+  /**
+   * Obtiene los posts gustados por el usuario.
+   * @param $event Evento producido al refrescar el usuario la lista
+   * arrastrando el dedo hacia abajo.
+   */
+  refreshUserLikedPosts($event) {
+    this.userService.getLikedPosts(this.user.id)
+      .then((data: Post[]) => {
+        this.userLikedPosts = data;
+        $event.target.complete();
+      })
+      .catch(err => {
+        $event.target.complete();
+        this.toast.show(err);
+      });
+  }
+
+  /**
+   * Intenta obtener un usuario de el route, sino lo encuentra, lo 
+   * obtiene de la autenticación. Posteriormente busca los posts del usuario,
+   * y los que le gustaron.
+   */
   setPage() {
-    this.user = this.authentication.getAuthenticatedUser();
-    this.userService.getPosts(this.user).then(
-      (data: Post[]) => {
-        this.userPosts = data;
-      })
-      .catch(error => {
-        console.log(error)
-      });
+    this.route.queryParams.subscribe(params => {
+      this.user = params['user'];
+      if (!this.user || !this.user.id) {  //Esta segunda comprobación se debe a que alguna vez me ha devuelto el objeto vacío.
+        this.user = this.authentication.getAuthenticatedUser();
+      }
+      this.userService.getPosts(this.user).then(
+        (data: Post[]) => {
+          this.userPosts = data;
+        })
+        .catch(err => {
+          this.toast.show(err)
+        });
+      this.userService.getLikedPosts(this.user.id).then(
+        (data: Post[]) => {
+          this.userLikedPosts = data;
+        })
+        .catch(err => {
+          this.toast.show(err)
+        });
+    });
   }
 
+  /**
+   * Abre la cámara, y una vez capturada la imágen, la obtiene 
+   */
   openCamera() {
     this.media.getDeviceImage(PictureSourceType.CAMERA)
-      .then((img) => {
-        this.userService.setUserImage(img, this.user)
-          .then(() => {
-            this.userImage = this.sanitizer.bypassSecurityTrustResourceUrl(img && 'data:image/jpeg;base64,' + img);
-            this.toast.show('Foto actualizada');
-          })
-          .catch((err) => { this.toast.show('La foto no se pudo actualizar') })
+      .then(img => {
+        if (img) {
+          this.userService.setUserImage(img, this.user)
+            .then(() => {
+              this.userImage = this.sanitizer.bypassSecurityTrustResourceUrl(img && 'data:image/jpeg;base64,' + img);
+              this.toast.show('Foto actualizada');
+            })
+            .catch(err => { this.toast.show('La foto no se pudo actualizar') })
+        } else {
+          this.toast.show('Error');
+        }
       })
-      .catch((err) => {
-        console.log(err)
+      .catch(err => {
+        this.toast.show('La foto no se pudo actualizar')
       })
-
   }
 
+  /**
+   * Redirige al usuario a la página del post clicado.
+   * @param post Post a visualizar.
+   */
   redirectToPost(post: Post) {
     let navigationExtras: NavigationExtras = {
       queryParams: {
@@ -137,7 +190,6 @@ export class UserPage implements OnInit {
   }
 
   /**
-   * Método llamado desde el HTML.
    * Comprueba si el usuario de la App le dio 'me gusta'
    * al un post en especifico.
    * @param postIndex index del post a comparar.

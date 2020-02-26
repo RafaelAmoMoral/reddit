@@ -1,9 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">reddit</string>
-    <string name="title_activity_main">reddit</string>
-    <string name="package_name">com.reddit.com</string>
-    <string name="custom_url_scheme">com.reddit.com</string>
-    <string name="fb_app_id">180055063404017</string>
-    <string name="fb_app_name">reddit</string>
-</resources>

@@ -14,15 +14,17 @@
     </ion-item>
     <ion-item lines="none">
         <img [src]="post.image" *ngIf="post.image" />
-        <ion-text>
-            <p>{{post.content}}</p>
-        </ion-text>
     </ion-item>
     <ion-item lines="none" *ngIf="post.video">
         <video [src]="post.video" width="320" height="240" controls></video>
     </ion-item>
+    <ion-item lines="none">
+        <ion-text>
+            <p>{{post.content}}</p>
+        </ion-text>
+    </ion-item>
     <ion-item>
-        <ion-label>{{post.userName}}</ion-label>
+        <ion-label>u/{{post.userName}}</ion-label>
         <ion-label>{{post.date | date:'mediumDate'}}</ion-label>
         <ion-button slot="end" [color]="userAlreadyLikesPost()?'danger':'primary'" (click)="onPostLiked(post.id)">
             <ion-icon slot="icon-only" name="thumbs-up" color="light"></ion-icon>

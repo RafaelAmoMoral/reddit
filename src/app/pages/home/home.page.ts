@@ -4,7 +4,7 @@ import { HomeUserPopoverComponent } from 'src/app/components/popovers/home-user-
 import { HomeListFilterPopoverComponent } from 'src/app/components/popovers/home-list-filter/home-list-filter-popover.component';
 import { Post } from 'src/app/model/iPost';
 import { PostService } from 'src/app/services/post.service';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/app/services/authentication.service';
 import { HomeLoginPopoverComponent } from 'src/app/components/popovers/home-login-popover/home-login-popover.component';
 import { NavController } from '@ionic/angular';
 import { User } from 'src/app/model/iUser';
@@ -23,28 +23,42 @@ export class HomePage implements OnInit {
   public posts: Post[];
   private _user: User;
   public filterType: string;
+  private _checked: boolean;
+  public searchActivated: boolean;
 
   constructor(private popover: PopoverManagerModule, private postService: PostService,
-    private authenticationService: AuthenticationService, private nav: NavController,
+    public authenticationService: AuthenticationService, private nav: NavController,
     private toast: ToastManagerModule, private loading: LoadingManagerModule) {
     this.posts = [];
-    this.filterType = "nLikes";
+    this.searchActivated = false;
+    this.filterType = "Popular";
+    this._user = this.authenticationService.getAuthenticatedUser();;
+    this.getPosts();
+    this._checked = true;
   }
 
   ngOnInit() {
   }
 
-  ionViewDidEnter() {//LO NECESITO PARA CUANDO VENGO DE HACER LOGIN O OBSERVABLE
-    let user = this.authenticationService.getAuthenticatedUser();
-    if (user !== this._user) {
-      this._user = user;
-      this.getPosts();
+  ionViewDidEnter() {
+    if (!this._checked) {
+      let user = this.authenticationService.getAuthenticatedUser();
+      if (user !== this._user) {
+        this._user = user;
+        this.getPosts();
+      }
+    } else {
+      this._checked = false;
     }
   }
 
+  /**
+   * Obtiene los usuarios de la base de datos.
+   * @param $event Evento producido al refrescar el ion-list
+   */
   async getPosts($event?: any) {
     await this.loading.presentLoading();
-    this.postService.getPosts(this.filterType)
+    this.postService.getPosts(this.filterType === 'Popular' ? 'nLikes' : 'date')
       .then((data: Post[]) => {
         this.posts = data;
         this.loading.hide();
@@ -61,34 +75,66 @@ export class HomePage implements OnInit {
       });
   }
 
+  /**
+   * Obtiene los usuarios de la base de datos por un título en concreto.
+   * @param $event Evento producido al refrescar el ion-list.
+   */
+  async getPostsByTitle(value: string) {
+    await this.loading.presentLoading();
+    this.postService.getPostsByTitle(value)
+      .then((data: Post[]) => {
+        this.posts = data;
+        this.loading.hide();
+      })
+      .catch(err => {
+        this.loading.hide();
+        this.toast.show(err);
+      });
+  }
+
+
+  /**
+   * Puede presentar dos tipos de popover, el de resgistro,
+   * si el usuario no existe o el del usuario si existe.
+   * @param $event Evento producido al clicar sobre el popover.
+   */
   async presentUserOptions($event: any) {
-    if (this.authenticationService.isLogged()) {
+    if (this._user) {
       await this.popover.presentPopover($event, HomeUserPopoverComponent);
       this.popover.onDismiss().then(data => {
-        if (data) {
-          this.loading.presentLoading();
-          this.authenticationService.logOut()
-            .then(isLoguedOut => {
-              if (isLoguedOut) {
-                this._user = this.authenticationService.getAuthenticatedUser();
-                this.postService.getPosts(this.filterType)
-                  .then((data: Post[]) => {
-                    this.posts = data;
-                    this.loading.hide();
-                  })
-                  .catch(err => {
-                    this.toast.show(err);
-                    this.loading.hide();
-                  });
-              } else {
+        if (data !== undefined) {
+          if (data) {
+            this.loading.presentLoading();
+            this.authenticationService.logOut()
+              .then(isLoguedOut => {
+                if (isLoguedOut) {
+                  this._user = this.authenticationService.getAuthenticatedUser();
+                  this.postService.getPosts(this.filterType === 'Popular' ? 'nLikes' : 'date')
+                    .then((data: Post[]) => {
+                      this.posts = data;
+                      this.loading.hide();
+                    })
+                    .catch(err => {
+                      this.toast.show(err);
+                      this.loading.hide();
+                    });
+                } else {
+                  this.toast.show('Intentelo más tarde');
+                  this.loading.hide();
+                }
+              })
+              .catch(err => {
                 this.toast.show('Intentelo más tarde');
                 this.loading.hide();
+              })
+          } else {
+            let navigationExtras: NavigationExtras = {
+              queryParams: {
+                user: this._user
               }
-            })
-            .catch(err => {
-              this.toast.show('Intentelo más tarde');
-              this.loading.hide();
-            })
+            };
+            this.nav.navigateForward('user', navigationExtras);
+          }
         }
       })
     } else {
@@ -114,24 +160,55 @@ export class HomePage implements OnInit {
     })
   }
 
+  presentSearchBar(present: boolean) {
+    this.searchActivated = present;
+  }
+
+  /**
+   * Redirige al usuario a la página del post clicado.
+   * @param post Post a visualizar.
+   */
   redirectToPost(post: Post) {
     let navigationExtras: NavigationExtras = {
       queryParams: {
         post: post
-      }
+      },
+      queryParamsHandling: "preserve",
     };
     this.nav.navigateForward('/post', navigationExtras)
       .then(() => { })
       .catch(err => this.toast.show(err))
   }
 
+  /**
+   * Redirige al usuario a la página del usuario clicado.
+   * @param user Usuario a visualizar.
+   */
+  redirectToUser(user: User) {
+    let navigationExtras: NavigationExtras = {
+      queryParams: {
+        user: user
+      }
+    };
+    this.nav.navigateForward('/user', navigationExtras)
+      .then(() => { })
+      .catch(err => this.toast.show(err))
+  }
+
+  /**
+   * Usado al hacer like en un post. 
+   * En primer lugar renderiza el like del post, en segundo lugar hace una petición a la base de datos
+   * para agregar dicho like. Si la petición fallase, el like sería desrenderizado.
+   * @param postId Id del post al que se dio like.
+   * @param index índice del post al que se le dio like.
+   */
   onPostLiked(postId: string, index: number) {
     if (this._user && this._user.id) {
       if (!this.userAlreadyLikesPost(index)) {
-        if (!this.posts[index].usersLikes) {  // Primero añado sin comprobar nada en la base de datos, para que visualmente no parezca un proceso lento
+        if (!this.posts[index].usersLikes) {  
           this.posts[index].usersLikes = [];
         }
-        this.posts[index].usersLikes.push(this._user.id);
+        this.posts[index].usersLikes.push(this._user.id); // Primero añado sin comprobar nada en la base de datos, para que visualmente no parezca un proceso lento
         this.posts[index].nLikes += 1;
         if (!this._user.likedPosts) {
           this._user.likedPosts = [];
@@ -166,6 +243,11 @@ export class HomePage implements OnInit {
     }
   }
 
+  /**
+   * Comprueba si en el array de los usuarios los cuáles le dieron a like a
+   * el post, se encuentra el del usuario.
+   * @param postIndex Índice del post gustado.
+   */
   userAlreadyLikesPost(postIndex: number): boolean {
     let found: boolean = false;
     if (this._user && this._user.id) {

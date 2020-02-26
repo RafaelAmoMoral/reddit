@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { User } from 'src/app/model/iUser';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/app/services/authentication.service';
 import { LoadingManagerModule } from 'src/app/modules/loading-manager/loading-manager.module';
 import { ToastManagerModule } from 'src/app/modules/toast-manager/toast-manager.module';
 import { NavController, IonInput } from '@ionic/angular';
@@ -14,15 +14,15 @@ import { NavController, IonInput } from '@ionic/angular';
 export class SigninPage implements OnInit {
 
   @ViewChild('passwordEyeRegister', { static: false }) passwordEye: IonInput;
-  passwordTypeInput = 'password';
-  iconpassword = 'eye-off';
-
+  public passwordTypeInput: string;
+  public iconpassword: string;
   public form: FormGroup
-  private user: User;
 
   constructor(private formBuilder: FormBuilder, private authentication: AuthenticationService,
     private loader: LoadingManagerModule, private toast: ToastManagerModule,
     private nav: NavController) {
+    this.passwordTypeInput = 'password';
+    this.iconpassword = 'eye-off';
   }
 
   ngOnInit() {
@@ -32,11 +32,12 @@ export class SigninPage implements OnInit {
     })
   }
 
+
   async login() {
     await this.loader.presentLoading();
     let user: User = this.getUserValues();
     try {
-      let databaseUser = await this.authentication.login(user);
+      await this.authentication.login(user);
       this.loader.hide()
         .then(() => {
           this.nav.navigateForward('/home')
@@ -60,6 +61,10 @@ export class SigninPage implements OnInit {
     this.authentication.loginFacebook();
   }
 
+  /**
+   * Método para obtener los datos del formulario.
+   * @returns varianle de tipo Usuario.
+   */
   getUserValues(): User {
     let user = {
       email: this.form.get('email').value,
@@ -68,6 +73,11 @@ export class SigninPage implements OnInit {
     return user;
   }
 
+  /**
+   * Método usado en el botón #passwordEye de HTML.
+   * Este método es usado para mostrar el yipo de campo de 
+   * la contraseña de text a password al igual que el boton que contiene.
+   */
   togglePasswordMode() {
     this.passwordTypeInput = this.passwordTypeInput === 'text' ? 'password' : 'text';
     this.iconpassword = this.iconpassword === 'eye-off' ? 'eye' : 'eye-off';

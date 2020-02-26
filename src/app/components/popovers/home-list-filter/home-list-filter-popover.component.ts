@@ -9,17 +9,29 @@ import { PopoverManagerModule } from 'src/app/modules/popover-manager/popover-ma
 })
 export class HomeListFilterPopoverComponent implements OnInit {
 
+  private static _filterType:string ='Popular';
+
   constructor(private popover: PopoverController) { 
   }
 
   ngOnInit() {}
 
   onMostPopularClicked(){
-    this.popover.dismiss("nLikes");
+    this.popover.dismiss("Popular");
+    this.filterType='Popular';
   }
 
   onNewestClicked(){
-    this.popover.dismiss("date")
+    this.popover.dismiss("Recientes");
+    this.filterType='Recientes';
+  }
+
+  set filterType(value:string){
+    HomeListFilterPopoverComponent._filterType=value;
+  }
+
+  get filterType(){
+    return HomeListFilterPopoverComponent._filterType;
   }
 
 

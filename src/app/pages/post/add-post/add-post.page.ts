@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { PostService } from 'src/app/services/post.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Post } from 'src/app/model/iPost';
-import { AuthenticationService } from 'src/app/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/app/services/authentication.service';
 import { NavController } from '@ionic/angular';
 import { LoadingManagerModule } from 'src/app/modules/loading-manager/loading-manager.module';
 import { ToastManagerModule } from 'src/app/modules/toast-manager/toast-manager.module';
@@ -27,10 +27,8 @@ export class AddPostPage implements OnInit {
   constructor(private postService: PostService, private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService, private loading: LoadingManagerModule,
     private nav: NavController, private toast: ToastManagerModule, private media: MediaService,
-    private sanitizer: DomSanitizer, private platform:Platform) {
-      this.platform.platforms().forEach(element => {
-        console.log(element)
-      });
+    private sanitizer: DomSanitizer) {
+
   }
 
   ngOnInit() {
@@ -40,7 +38,12 @@ export class AddPostPage implements OnInit {
     })
   }
 
-  getPostValues(): Post {
+  /**
+   * Obtiene los valores del formulario, y si el usuario está autenticado,
+   * añade id y nombre del usuario al post.
+   * Posteriormente crea un usuario con esos valores.
+   */
+  getUserFromPostValues(): Post {
     let post: Post;
     let authenticatedUser = this.authenticationService.getAuthenticatedUser();
     if (authenticatedUser) {
@@ -56,63 +59,49 @@ export class AddPostPage implements OnInit {
     return post;
   }
 
-  async addPost() {
+  /**
+   * Añade un post a la base de datos.
+   */
+  async addPost(): Promise<void> {
     await this.loading.presentLoading('Subiendo...');
-    let post: Post = this.getPostValues();
+    let post: Post = this.getUserFromPostValues();
     if (post) {
-      this.postService.addPost(post)
-        .then(async (postId) => {
-          if (this.image) {
-            try {
-              await this.postService.saveImage(this._base64Image, postId);
-            } catch (err) {
-              this.toast.show(err);
-            }
-          } else if (this.video) {
-            try {
-              await this.postService.saveVideo(this._base64Video, postId)
-            } catch (err) {
-              this.toast.show(err);
-            }
-          }
-
+      this.postService.addPost(post, this._base64Image, this._base64Video)
+        .then(postId => {
           this.loading.hide();
           this.nav.navigateBack('/user')
             .then(() => { this.toast.show('¡Post subido con éxito!') })
         })
-        .catch(err => this.loading.hide())
+        .catch(err => {
+          this.loading.hide()
+        })
     } else {
       this.loading.hide();
       this.toast.show('¡Ocurrio un error!');
       try {
         await this.nav.back();
-      } catch (err) { }
+      } catch (err) {
+        this.toast.show(err)
+      }
     }
   }
 
-  getVideoFromGallery() {
-    this.media.getVideoFromGallery()
-      .then(data => {
-        if (data) {
-          this.video = data;
-          this.image = null;
-        }
-      })
-      .catch(err => {
-        this.toast.show(err);
-      })
-  }
-
-  getImageFromGallery() {
+  /**
+   * Obtiene una imágen de la galería, una vez obtenido el base64 de la imágen, crea
+   * una url válida para mostrar la imágen.
+   * Elimina el vídeo (si la había posteriormente).
+   */
+  getImageFromGallery(): void {
     this.media.getDeviceImage(PictureSourceType.PHOTOLIBRARY)
       .then(async (base64Image) => {
         if (base64Image) {
           let url: SafeResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl(base64Image && 'data:image/jpeg;base64,' + base64Image);
           try {
             this._base64Image = base64Image;
-            url = await this.media.generateImage('data:image/jpeg;base64,' + base64Image, 100, 100, 10);
+            url = await this.media.resizeImage('data:image/jpeg;base64,' + base64Image, 100, 100, 10);
             this.image = url;
             this.video = null;
+            this._base64Video = null;
           } catch (err) {
             this.toast.show(err);
           }
@@ -123,21 +112,28 @@ export class AddPostPage implements OnInit {
       })
   }
 
+  /**
+   * Obtiene un vídeo de la cámara.
+   * Elimina la imágen (si la había posteriormente).
+   */
   getVideo() {
-    console.log('sacar un video')
     this.media.getVideo()
       .then(base64video => {
         if (base64video) {
           this._base64Video = base64video;
           this.video = 'data:video/mp4;base64,' + base64video;
           this.image = null;
+          this._base64Image = null;
         }
       })
-      .catch(err => {
-        console.log(err)
-      })
+      .catch(err => this.toast.show(err))
   }
 
+  /**
+   * Obtiene una imágen de la cámara, una vez obtenido el base64 de la imágen, crea
+   * una url válida para mostrar la imágen.
+   * Elimina el vídeo (si la había posteriormente).
+   */
   getImage() {
     this.media.getDeviceImage(PictureSourceType.CAMERA)
       .then(base64Image => {
@@ -145,9 +141,10 @@ export class AddPostPage implements OnInit {
           this._base64Image = base64Image;
           this.image = this.sanitizer.bypassSecurityTrustResourceUrl(base64Image && 'data:image/jpeg;base64,' + base64Image);
           this.video = null;
+          this._base64Video = null;
         }
       })
-      .catch(err => { this.toast.show(err) })
+      .catch(err => this.toast.show(err))
   }
 
 }
